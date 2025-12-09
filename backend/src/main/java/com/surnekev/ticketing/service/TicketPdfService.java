@@ -20,8 +20,9 @@ import java.util.List;
 @Slf4j
 public class TicketPdfService {
 
+    private static final ZoneId MOSCOW_ZONE = ZoneId.of("Europe/Moscow");
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.systemDefault());
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(MOSCOW_ZONE);
     
     private static final String ORGANIZER_NAME = "Surnek Events";
     

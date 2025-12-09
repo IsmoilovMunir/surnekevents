@@ -26,6 +26,10 @@ import java.util.Objects;
 @Slf4j
 public class EmailService {
 
+    private static final ZoneId MOSCOW_ZONE = ZoneId.of("Europe/Moscow");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(MOSCOW_ZONE);
+
     private final JavaMailSender mailSender;
 
     @Value("${mail.from:no-reply@surnekevents.ru}")
@@ -78,9 +82,7 @@ public class EmailService {
     private String buildBody(Reservation reservation, List<Ticket> confirmedTickets) {
         String concertTitle = safe(reservation.getConcert().getTitle());
         String dateTime = reservation.getConcert().getConcertDate() != null
-                ? DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
-                .withZone(ZoneId.systemDefault())
-                .format(reservation.getConcert().getConcertDate())
+                ? DATE_TIME_FORMATTER.format(reservation.getConcert().getConcertDate())
                 : "Уточняется";
         StringBuilder seats = new StringBuilder();
         if (confirmedTickets != null && !confirmedTickets.isEmpty()) {
@@ -153,9 +155,7 @@ public class EmailService {
     private String buildRefundBody(Reservation reservation, List<Ticket> refundedTickets, String reason) {
         String concertTitle = safe(reservation.getConcert().getTitle());
         String dateTime = reservation.getConcert().getConcertDate() != null
-                ? DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
-                .withZone(ZoneId.systemDefault())
-                .format(reservation.getConcert().getConcertDate())
+                ? DATE_TIME_FORMATTER.format(reservation.getConcert().getConcertDate())
                 : "Уточняется";
         StringBuilder seats = new StringBuilder();
         if (refundedTickets != null && !refundedTickets.isEmpty()) {
