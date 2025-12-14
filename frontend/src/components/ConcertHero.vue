@@ -23,15 +23,24 @@
           </div>
           <div class="d-flex gap-3 flex-wrap mt-3 mb-3 buttons-container">
             <button class="btn btn-light btn-lg px-4 buy-button" @click="$emit('cta')">Купить билет</button>
-            <button class="btn btn-outline-light btn-lg px-4">Подробнее</button>
+            <a href="https://t.me/surnek_events" class="btn btn-outline-light btn-lg px-4">
+              Подробнее
+            </a>
           </div>
           <p class="mt-3 text-light mb-0">
             Выберите лучший стол, подтвердите бронь с менеджером и получите QR‑билеты.
           </p>
         </div>
         <div class="col-lg-5">
-          <div class="glass-card text-center">
-            <img :src="posterImage" alt="Poster" class="img-fluid" />
+          <div class="glass-card text-center parallax-container">
+            <div class="parallax-wrapper">
+              <img 
+                ref="parallaxImage" 
+                :src="posterImage" 
+                alt="Poster" 
+                class="img-fluid parallax-image" 
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -40,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import safarImage from '@/assets/safar.png';
 
 const props = defineProps<{
@@ -72,6 +81,58 @@ const titleParts = computed(() => {
 const titlePrefix = computed(() => titleParts.value.prefix);
 const titleMain = computed(() => titleParts.value.main);
 const posterImage = computed(() => props.poster || safarImage);
+
+// Parallax effect
+const parallaxImage = ref<HTMLImageElement | null>(null);
+let animationFrameId: number | null = null;
+
+const handleScroll = () => {
+  if (!parallaxImage.value) return;
+  
+  // Отменяем предыдущий кадр анимации для оптимизации
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
+  
+  animationFrameId = requestAnimationFrame(() => {
+    if (!parallaxImage.value) return;
+    
+    const scrolled = window.pageYOffset;
+    const heroSection = parallaxImage.value.closest('.hero-section');
+    
+    if (!heroSection) return;
+    
+    const heroRect = heroSection.getBoundingClientRect();
+    const heroHeight = heroRect.height;
+    const heroTop = heroRect.top;
+    
+    // Параллакс работает только когда секция видна
+    if (heroTop + heroHeight > 0 && heroTop < window.innerHeight) {
+      // Вычисляем прогресс скролла относительно секции
+      const scrollProgress = Math.max(0, Math.min(1, -heroTop / heroHeight));
+      
+      // Параллакс эффект - изображение движется медленнее
+      const parallaxOffset = scrolled * 0.25; // Скорость параллакса
+      const scale = 1.05 + scrollProgress * 0.05; // Легкое увеличение при скролле
+      
+      parallaxImage.value.style.transform = `translateY(${parallaxOffset}px) scale(${scale})`;
+    }
+  });
+};
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener('resize', handleScroll, { passive: true });
+  handleScroll(); // Инициализация при монтировании
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+  window.removeEventListener('resize', handleScroll);
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
+});
 
 // Убираем "Новогодний вечер с SAFARMUHAMMAD" и "Сбор гостей..." из описания
 const filteredDescription = computed(() => {
@@ -148,6 +209,53 @@ defineEmits(['cta']);
   box-shadow: none;
 }
 
+/* Parallax Effect Styles */
+.parallax-container {
+  position: relative;
+  overflow: visible;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.parallax-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.parallax-image {
+  will-change: transform;
+  filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.4));
+  transition: filter 0.3s ease;
+  animation: floatAnimation 8s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes floatAnimation {
+  0%, 100% {
+    transform: translateY(0) scale(1.05) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) scale(1.06) rotate(0.5deg);
+  }
+  50% {
+    transform: translateY(-12px) scale(1.07) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-8px) scale(1.06) rotate(-0.5deg);
+  }
+}
+
+.parallax-image:hover {
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.5));
+  animation-play-state: paused;
+}
+
 /* Мобильные стили для планшетов и меньше */
 @media (max-width: 991px) {
   section.hero-section.hero-section {
@@ -157,7 +265,7 @@ defineEmits(['cta']);
   }
 
   section.hero-section .title-main.title-main {
-    font-size: 2.5em !important;
+    font-size: 3.5em !important;
     line-height: 1 !important;
   }
 
@@ -167,6 +275,10 @@ defineEmits(['cta']);
 
   section.hero-section .glass-card.glass-card img {
     max-width: 100% !important;
+  }
+  
+  .parallax-image {
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
   }
 }
 
@@ -180,7 +292,7 @@ defineEmits(['cta']);
   }
 
   section.hero-section .title-main.title-main {
-    font-size: 2.5em !important;
+    font-size: 3.5em !important;
     line-height: 1 !important;
   }
 
@@ -227,7 +339,7 @@ defineEmits(['cta']);
   }
 
   section.hero-section .title-main.title-main {
-    font-size: 2em !important;
+    font-size: 3em !important;
     line-height: 1 !important;
     margin-bottom: -0.1em !important;
   }
@@ -286,7 +398,7 @@ defineEmits(['cta']);
   }
 
   section.hero-section .title-main.title-main {
-    font-size: 1.8em !important;
+    font-size: 5.6em !important;
   }
 
   section.hero-section .title-prefix.title-prefix {

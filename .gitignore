@@ -19,3 +19,6 @@ backend/build/
 .vscode/
 *.iml
 
+# SSL certificates
+infrastructure/ssl/
+
