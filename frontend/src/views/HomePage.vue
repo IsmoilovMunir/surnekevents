@@ -258,6 +258,102 @@
       </div>
     </section>
 
+    <!-- Contacts Section -->
+    <section class="py-5 py-md-4 py-sm-3 bg-body">
+      <div class="container">
+        <div class="text-center mb-4 mb-md-3 mb-sm-2">
+          <h2 class="display-6 fw-bold mb-2 mb-md-2 mb-sm-1">Свяжитесь с нами</h2>
+          <p class="text-body-secondary mb-0">Мы всегда готовы ответить на ваши вопросы</p>
+        </div>
+
+        <div class="row g-3 g-md-3 g-sm-2 justify-content-center">
+          <!-- Booking Contacts -->
+          <div class="col-lg-4 col-md-6">
+            <div class="contact-card">
+              <div class="contact-card-icon contact-icon-booking">
+                <i class="bi bi-calendar-check"></i>
+              </div>
+              <h3 class="contact-card-title">Бронирование</h3>
+              <p class="contact-card-description">Забронируйте место на концерт</p>
+              
+              <div class="contact-phone-wrapper">
+                <div class="contact-icons">
+                  <a 
+                    href="https://t.me/surnekevents" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="contact-icon-link"
+                    title="Telegram"
+                  >
+                    <i class="bi bi-telegram"></i>
+                  </a>
+                  <a 
+                    href="https://wa.me/79362660668" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="contact-icon-link"
+                    title="WhatsApp"
+                  >
+                    <i class="bi bi-whatsapp"></i>
+                  </a>
+                  <a 
+                    href="tel:+79362660668" 
+                    class="contact-icon-link"
+                    title="Телефон"
+                  >
+                    <i class="bi bi-telephone"></i>
+                  </a>
+                </div>
+                <a href="tel:+79362660668" class="contact-phone-number">+7 (936) 266-06-68</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Partners Contact -->
+          <div class="col-lg-4 col-md-6">
+            <div class="contact-card">
+              <div class="contact-card-icon contact-icon-partners">
+                <i class="bi bi-briefcase"></i>
+              </div>
+              <h3 class="contact-card-title">Для партнёров</h3>
+              <p class="contact-card-description">Обратная связь для партнёрства</p>
+              
+              <div class="contact-phone-wrapper">
+                <div class="contact-icons">
+                  <a 
+                    href="https://t.me/+79154680181" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="contact-icon-link"
+                    title="Telegram"
+                  >
+                    <i class="bi bi-telegram"></i>
+                  </a>
+                  <a 
+                    href="https://wa.me/79154680181" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="contact-icon-link"
+                    title="WhatsApp"
+                  >
+                    <i class="bi bi-whatsapp"></i>
+                  </a>
+                  <a 
+                    href="tel:+79154680181" 
+                    class="contact-icon-link"
+                    title="Телефон"
+                  >
+                    <i class="bi bi-telephone"></i>
+                  </a>
+                </div>
+                <a href="tel:+79154680181" class="contact-phone-number">+7 (915) 468-01-81</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CTA Section -->
     <section class="py-5 bg-primary text-white">
       <div class="container text-center">
@@ -384,11 +480,11 @@ const concertProgram = [
 // Partners data - original arrays
 const originalGeneralSponsors = [
   { 
-    name: '7 Агентство недвижимости',
+    name: 'CHID Агентство недвижимости',
     logo: chidLogo,
     description: 'Профессиональное агентство недвижимости с многолетним опытом работы на рынке. Мы помогаем найти дом мечты и обеспечить безопасные сделки.',
-    telegram: 'https://t.me/agency7_realty',
-    telegramChannel: '@agency7_realty',
+    telegram: 'https://t.me/chidestate',
+    telegramChannel: '@chidestate',
     services: [
       'Продажа и покупка недвижимости',
       'Аренда жилой и коммерческой недвижимости',
@@ -1704,6 +1800,234 @@ onUnmounted(() => {
   .sponsor-telegram-link {
     font-size: 0.9rem;
     padding: 0.6rem 1.2rem;
+  }
+}
+
+/* Contacts Section Styles */
+.contact-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(24, 114, 63, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #18723F 0%, #6f42c1 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(24, 114, 63, 0.25);
+}
+
+.contact-card:hover::before {
+  transform: scaleX(1);
+}
+
+.contact-card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  font-size: 1.6rem;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.contact-icon-booking {
+  background: linear-gradient(135deg, #18723F 0%, #6f42c1 100%);
+  box-shadow: 0 4px 12px rgba(24, 114, 63, 0.25);
+}
+
+.contact-icon-partners {
+  background: linear-gradient(135deg, #6f42c1 0%, #18723F 100%);
+  box-shadow: 0 4px 12px rgba(111, 66, 193, 0.25);
+}
+
+.contact-card:hover .contact-card-icon {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.contact-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #18723F;
+  margin-bottom: 0.5rem;
+}
+
+.contact-card-description {
+  color: #6c757d;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.contact-phone-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(24, 114, 63, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(24, 114, 63, 0.1);
+  transition: all 0.3s ease;
+}
+
+.contact-phone-wrapper:hover {
+  background: rgba(24, 114, 63, 0.08);
+  border-color: rgba(24, 114, 63, 0.2);
+}
+
+.contact-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.contact-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+}
+
+.contact-icon-link {
+  color: #18723F;
+  background: rgba(24, 114, 63, 0.1);
+}
+
+.contact-icon-link:hover {
+  background: #18723F;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(24, 114, 63, 0.3);
+}
+
+.contact-phone-number {
+  color: #18723F;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+  flex: 1;
+  text-align: center;
+}
+
+.contact-phone-number:hover {
+  color: #6f42c1;
+}
+
+/* Responsive Design for Contacts */
+@media (max-width: 768px) {
+  .contact-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .contact-card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .contact-card-title {
+    font-size: 1rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .contact-card-description {
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .contact-phone-wrapper {
+    padding: 0.55rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .contact-icon-link {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+
+  .contact-phone-number {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .contact-card {
+    padding: 1rem 0.75rem;
+  }
+
+  .contact-card-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .contact-card-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .contact-card-description {
+    font-size: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .contact-phone-wrapper {
+    padding: 0.5rem 0.6rem;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .contact-icons {
+    gap: 0.3rem;
+  }
+
+  .contact-icon-link {
+    width: 26px;
+    height: 26px;
+    font-size: 0.85rem;
+  }
+
+  .contact-phone-number {
+    font-size: 0.8rem;
+    width: 100%;
+    text-align: center;
   }
 }
 </style>

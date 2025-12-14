@@ -23,7 +23,7 @@
           </div>
           <div class="d-flex gap-3 flex-wrap mt-3 mb-3 buttons-container">
             <button class="btn btn-light btn-lg px-4 buy-button" @click="$emit('cta')">Купить билет</button>
-            <a href="https://t.me/surnek_events" class="btn btn-outline-light btn-lg px-4">
+            <a href="https://t.me/surnekevents" class="btn btn-outline-light btn-lg px-4">
               Подробнее
             </a>
           </div>

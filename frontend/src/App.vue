@@ -15,7 +15,18 @@
     </main>
     <footer class="py-4 border-top bg-body-tertiary">
       <div class="container text-center small text-body-secondary">
-        © {{ new Date().getFullYear() }}. Все права защищены.
+        <div>© {{ new Date().getFullYear() }}. Все права защищены.</div>
+        <div class="mt-2">
+          Created by 
+          <a 
+            href="https://t.me/ismailovmunir" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="footer-creator-link"
+          >
+            Munir Ismoilov
+          </a>
+        </div>
       </div>
     </footer>
   </div>
@@ -42,6 +53,19 @@ import logoImg from '@/assets/log.svg';
 .logo-img {
   height: 50px;
   width: auto;
+}
+
+.footer-creator-link {
+  color: #18723F;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.footer-creator-link:hover {
+  color: #6f42c1;
+  border-bottom-color: #6f42c1;
 }
 </style>
 
