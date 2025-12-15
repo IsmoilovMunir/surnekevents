@@ -443,10 +443,19 @@ const openModal = () => {
 
 const formattedDate = computed(() => {
   if (!concert.value) return '';
+
+  const date = new Date(concert.value.concertDate as unknown as string);
+
+  if (Number.isNaN(date.getTime())) {
+    // Если по какой-то причине дата пришла в неожиданном формате,
+    // не падаем, а просто скрываем форматированную дату
+    return '';
+  }
+
   return new Intl.DateTimeFormat('ru-RU', {
     dateStyle: 'full',
     timeStyle: 'short'
-  }).format(new Date(concert.value.concertDate));
+  }).format(date);
 });
 
 const concertProgram = [
