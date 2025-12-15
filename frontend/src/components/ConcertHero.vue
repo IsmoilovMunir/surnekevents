@@ -62,7 +62,13 @@ const props = defineProps<{
 
 // Разделяем title на две части: "Новогодний вечер с" и "SAFARMUHAMMAD"
 const titleParts = computed(() => {
-  const fullTitle = props.title;
+  const fullTitle = props.title || '';
+  if (!fullTitle) {
+    return {
+      prefix: '',
+      main: ''
+    };
+  }
   // Ищем "SAFARMUHAMMAD" в любом регистре
   const match = fullTitle.match(/^(.*?)\s+(SAFARMUHAMMAD.*)$/i);
   if (match) {
