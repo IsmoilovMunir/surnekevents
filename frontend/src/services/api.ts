@@ -39,6 +39,7 @@ export interface CreateReservationPayload {
   buyerName: string;
   buyerPhone: string;
   buyerEmail: string;
+  promoCode?: string;
 }
 
 export const createReservation = async (payload: CreateReservationPayload) => {
@@ -201,6 +202,81 @@ export const submitPartnerRequest = async (request: {
 }) => {
   const { data } = await apiClient.post<{ message: string }>('/partner-request', request);
   return data;
+};
+
+export interface ValidatePromoCodePayload {
+  code: string;
+  seatCategoryIds: number[];
+}
+
+export interface PromoCodeValidationResponse {
+  valid: boolean;
+  message?: string;
+  discountPercent?: number;
+  promoCodeId?: number;
+}
+
+export const validatePromoCode = async (payload: ValidatePromoCodePayload) => {
+  const { data } = await api.post<PromoCodeValidationResponse>('/promo-codes/validate', payload);
+  return data;
+};
+
+export interface PromoCodeDto {
+  id: number;
+  code: string;
+  discountPercent: number;
+  applicableCategoryIds?: number[] | null;
+  active: boolean;
+  validFrom: string;
+  validTo?: string | null;
+  usageLimit?: number | null;
+  usedCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePromoCodeRequest {
+  code: string;
+  discountPercent: number;
+  applicableCategoryIds?: number[] | null;
+  active: boolean;
+  validFrom?: string | null;
+  validTo?: string | null;
+  usageLimit?: number | null;
+}
+
+export interface UpdatePromoCodeRequest {
+  code?: string;
+  discountPercent?: number;
+  applicableCategoryIds?: number[] | null;
+  active?: boolean;
+  validFrom?: string | null;
+  validTo?: string | null;
+  usageLimit?: number | null;
+}
+
+export const fetchPromoCodes = async () => {
+  const { data } = await apiClient.get<PromoCodeDto[]>('/promo-codes/admin');
+  return data;
+};
+
+export const getPromoCode = async (id: number) => {
+  const { data } = await apiClient.get<PromoCodeDto>(`/promo-codes/admin/${id}`);
+  return data;
+};
+
+export const createPromoCode = async (payload: CreatePromoCodeRequest) => {
+  const { data } = await apiClient.post<PromoCodeDto>('/promo-codes/admin', payload);
+  return data;
+};
+
+export const updatePromoCode = async (id: number, payload: UpdatePromoCodeRequest) => {
+  const { data } = await apiClient.put<PromoCodeDto>(`/promo-codes/admin/${id}`, payload);
+  return data;
+};
+
+export const deletePromoCode = async (id: number) => {
+  await apiClient.delete(`/promo-codes/admin/${id}`);
 };
 
 export const apiClient = api;

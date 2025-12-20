@@ -1,6 +1,7 @@
 package com.surnekev.ticketing.service;
 
 import com.surnekev.ticketing.domain.Concert;
+import com.surnekev.ticketing.domain.PromoCode;
 import com.surnekev.ticketing.domain.Reservation;
 import com.surnekev.ticketing.domain.ReservationStatus;
 import com.surnekev.ticketing.domain.Seat;
@@ -13,8 +14,11 @@ import com.surnekev.ticketing.dto.ReservationCreatedEvent;
 import com.surnekev.ticketing.dto.ReservationResponse;
 import com.surnekev.ticketing.dto.SeatDto;
 import com.surnekev.ticketing.dto.SeatStatusChangeEvent;
+import com.surnekev.ticketing.dto.ValidatePromoCodeRequest;
+import com.surnekev.ticketing.dto.PromoCodeValidationResponse;
 import com.surnekev.ticketing.mapper.SeatMapper;
 import com.surnekev.ticketing.repository.ConcertRepository;
+import com.surnekev.ticketing.repository.PromoCodeRepository;
 import com.surnekev.ticketing.repository.ReservationRepository;
 import com.surnekev.ticketing.repository.SeatRepository;
 import com.surnekev.ticketing.repository.TicketRepository;
@@ -51,6 +55,8 @@ public class ReservationService {
     private final TicketRepository ticketRepository;
     private final JdbcTemplate jdbcTemplate;
     private final EmailService emailService;
+    private final PromoCodeRepository promoCodeRepository;
+    private final PromoCodeService promoCodeService;
 
     @Value("${seatmap.hold-ttl-seconds:1800}")
     private long holdTtlSeconds;
@@ -87,6 +93,21 @@ public class ReservationService {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(holdTtlSeconds);
 
+        // Валидация и применение промокода
+        PromoCode promoCode = null;
+        if (StringUtils.hasText(request.promoCode())) {
+            List<Long> categoryIds = seats.stream()
+                    .map(seat -> seat.getCategory().getId())
+                    .distinct()
+                    .collect(Collectors.toList());
+            PromoCodeValidationResponse validation = promoCodeService.validate(
+                    new ValidatePromoCodeRequest(request.promoCode(), categoryIds));
+            if (validation.valid() && validation.promoCodeId() != null) {
+                promoCode = promoCodeRepository.findById(validation.promoCodeId())
+                        .orElse(null);
+            }
+        }
+
         Reservation reservation = Reservation.builder()
                 .id(reservationId)
                 .concert(concert)
@@ -97,6 +118,7 @@ public class ReservationService {
                 .expiresAt(expiresAt)
                 .createdAt(now)
                 .seats(seats)
+                .promoCode(promoCode)
                 .build();
 
         var previousStatuses = seats.stream().collect(Collectors.toMap(Seat::getId, Seat::getStatus));
@@ -104,6 +126,11 @@ public class ReservationService {
         Reservation saved = reservationRepository.save(reservation);
         seatRepository.saveAll(seats);
         ticketService.createDraftTickets(saved);
+
+        // Увеличиваем счетчик использования промокода
+        if (promoCode != null) {
+            promoCodeService.incrementUsage(promoCode.getId());
+        }
 
         publishSeatEvents(concert.getId(), seats, previousStatuses, SeatStatus.HELD, expiresAt);
         seatEventPublisher.publishReservation(concert.getId(), new ReservationCreatedEvent(saved.getId(),

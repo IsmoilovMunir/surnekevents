@@ -3,6 +3,7 @@ package com.surnekev.ticketing.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.surnekev.ticketing.domain.Reservation;
+import com.surnekev.ticketing.domain.Seat;
 import com.surnekev.ticketing.domain.Ticket;
 import com.surnekev.ticketing.domain.TelegramLog;
 import com.surnekev.ticketing.repository.TelegramLogRepository;
@@ -162,24 +163,62 @@ public class TelegramService {
     }
 
     private String buildReservationText(String prefix, Reservation reservation) {
-        String seats = reservation.getSeats().stream()
-                .map(seat -> "Стол " + seat.getTableNumber() + ", место " + seat.getChairNumber())
-                .collect(Collectors.joining("\n"));
-        return """
-                <b>%s</b>
-                ID: %s
-                Клиент: %s (%s)
-
-                Места:
-                %s
-
-                Истекает: %s
-                """.formatted(prefix,
-                reservation.getId(),
+        StringBuilder seatsText = new StringBuilder();
+        int totalPrice = 0;
+        int totalDiscount = 0;
+        
+        for (Seat seat : reservation.getSeats()) {
+            int price = seat.getPriceOverrideCents() != null 
+                    ? seat.getPriceOverrideCents() 
+                    : seat.getCategory().getPriceCents();
+            
+            int discount = 0;
+            if (reservation.getPromoCode() != null) {
+                // Проверяем, применим ли промокод к этой категории
+                boolean applicable = reservation.getPromoCode().getApplicableCategoryIds() == null 
+                        || reservation.getPromoCode().getApplicableCategoryIds().isEmpty()
+                        || reservation.getPromoCode().getApplicableCategoryIds().contains(seat.getCategory().getId());
+                
+                if (applicable) {
+                    discount = (price * reservation.getPromoCode().getDiscountPercent()) / 100;
+                }
+            }
+            
+            int finalPrice = price - discount;
+            totalPrice += price;
+            totalDiscount += discount;
+            
+            seatsText.append(String.format("Стол %d, место %d - %s: %d ₽", 
+                    seat.getTableNumber(), 
+                    seat.getChairNumber(),
+                    seat.getCategory().getName(),
+                    finalPrice / 100));
+            if (discount > 0) {
+                seatsText.append(String.format(" (скидка %d%%: -%d ₽)", 
+                        reservation.getPromoCode().getDiscountPercent(),
+                        discount / 100));
+            }
+            seatsText.append("\n");
+        }
+        
+        int finalTotal = totalPrice - totalDiscount;
+        
+        StringBuilder message = new StringBuilder();
+        message.append(String.format("<b>%s</b>\n", prefix));
+        message.append(String.format("ID: %s\n", reservation.getId()));
+        message.append(String.format("Клиент: %s (%s)\n\n", 
                 defaultString(reservation.getBuyerName(), "—"),
-                defaultString(reservation.getBuyerPhone(), "—"),
-                seats,
-                reservation.getExpiresAt());
+                defaultString(reservation.getBuyerPhone(), "—")));
+        message.append("<b>Билеты:</b>\n");
+        message.append(seatsText);
+        message.append("\n");
+        message.append(String.format("<b>Итого:</b> %d ₽", finalTotal / 100));
+        if (totalDiscount > 0) {
+            message.append(String.format(" (скидка: -%d ₽)", totalDiscount / 100));
+        }
+        message.append(String.format("\n\nИстекает: %s", reservation.getExpiresAt()));
+        
+        return message.toString();
     }
 
     public void sendVerificationCode(String username, String verificationCode) {

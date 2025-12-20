@@ -19,6 +19,7 @@ public class SeatMapper {
                 seat.getTableNumber(),
                 seat.getChairNumber(),
                 seat.getCategory().getName(),
+                seat.getCategory().getId(),
                 seat.getCategory().getColorHex(),
                 resolvedPrice,
                 seat.getPriceOverrideCents(),

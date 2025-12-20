@@ -9,6 +9,7 @@ public record SeatDto(
         int tableNumber,
         int chairNumber,
         String categoryName,
+        Long categoryId,
         String categoryColorHex,
         int priceCents,
         Integer priceOverrideCents,

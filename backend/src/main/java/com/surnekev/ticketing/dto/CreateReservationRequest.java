@@ -12,7 +12,8 @@ public record CreateReservationRequest(
         @NotEmpty @Size(max = 10) List<Long> seatIds,
         @NotEmpty String buyerName,
         @NotEmpty String buyerPhone,
-        @Email String buyerEmail
+        @Email String buyerEmail,
+        String promoCode
 ) {
 }
 

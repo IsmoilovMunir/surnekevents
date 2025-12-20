@@ -50,8 +50,11 @@
             </p>
             <div class="checkout-summary sticky-checkout mb-2">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-semibold small">Сумма: {{ formatPrice(total) }}</span>
+                <span class="fw-semibold small">Сумма: {{ formatPrice(calculatedTotal) }}</span>
                 <small class="text-body-secondary" style="font-size: 0.75rem;">{{ selected.size }}/10 мест</small>
+              </div>
+              <div v-if="discountAmount > 0" class="text-success small mb-2">
+                Скидка: -{{ formatPrice(discountAmount) }}
               </div>
               <div class="form-check mb-2">
                 <input
@@ -103,6 +106,31 @@
               />
               <small class="text-body-secondary small">Укажите почту, чтобы получить билеты на email.</small>
             </div>
+            <div class="promo-code-block mb-2">
+              <label class="form-label small text-uppercase text-body-secondary mb-1">Промокод</label>
+              <div class="input-group input-group-sm">
+                <input
+                  v-model="reservationStore.promoCode"
+                  class="form-control"
+                  placeholder="Введите промокод"
+                  @blur="validatePromoCode"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  @click="validatePromoCode"
+                  :disabled="!reservationStore.promoCode.trim()"
+                >
+                  Применить
+                </button>
+              </div>
+              <p v-if="reservationStore.promoCodeError" class="text-danger small mt-1 mb-0" style="font-size: 0.7rem;">
+                {{ reservationStore.promoCodeError }}
+              </p>
+              <p v-else-if="reservationStore.promoCodeDiscount" class="text-success small mt-1 mb-0" style="font-size: 0.7rem;">
+                Скидка {{ reservationStore.promoCodeDiscount }}% применена
+              </p>
+            </div>
             <div
               class="selected-seats-container flex-grow-1"
               :class="{ 'selected-seats-scroll': selectedSeats.length > 2 }"
@@ -118,7 +146,12 @@
                     </div>
                     <div class="text-body-secondary" style="font-size: 0.75rem;">{{ getCategoryDisplayName(seat.categoryName) }}</div>
                   </div>
-                  <div class="fw-semibold small ms-2">{{ formatPrice(seat.priceCents) }}</div>
+                  <div class="fw-semibold small ms-2">
+                    {{ formatPrice(getSeatPrice(seat)) }}
+                    <span v-if="getSeatDiscount(seat) > 0" class="text-success" style="font-size: 0.7rem;">
+                      (скидка -{{ formatPrice(getSeatDiscount(seat)) }})
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -160,13 +193,21 @@
                   {{ seat.categoryName }}
                 </div>
               </div>
-              <div class="fw-semibold small ms-2">{{ formatPrice(seat.priceCents) }}</div>
+              <div class="fw-semibold small ms-2">
+                {{ formatPrice(getSeatPrice(seat)) }}
+                <span v-if="getSeatDiscount(seat) > 0" class="text-success" style="font-size: 0.7rem;">
+                  (скидка -{{ formatPrice(getSeatDiscount(seat)) }})
+                </span>
+              </div>
             </div>
           </div>
           <div class="mt-3 p-2 bg-light rounded">
             <div class="d-flex justify-content-between align-items-center">
               <span class="fw-semibold">Итого:</span>
-              <span class="fw-bold text-primary fs-5">{{ formatPrice(total) }}</span>
+              <span class="fw-bold text-primary fs-5">{{ formatPrice(calculatedTotal) }}</span>
+            </div>
+            <div v-if="discountAmount > 0" class="text-success small mt-1">
+              Скидка: -{{ formatPrice(discountAmount) }}
             </div>
             <div class="text-body-secondary small mt-1">
               {{ selectedSeats.length }} {{ getTicketText(selectedSeats.length) }}
@@ -198,6 +239,33 @@
             placeholder="example@site.com"
           />
           <small class="text-body-secondary">Укажите почту, чтобы получить билеты на email.</small>
+        </div>
+
+        <!-- Промокод -->
+        <div class="promo-code-block mb-3">
+          <h4 class="h6 mb-2">Промокод</h4>
+          <div class="input-group input-group-sm">
+            <input
+              v-model="reservationStore.promoCode"
+              class="form-control"
+              placeholder="Введите промокод"
+              @blur="validatePromoCode"
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              @click="validatePromoCode"
+              :disabled="!reservationStore.promoCode.trim()"
+            >
+              Применить
+            </button>
+          </div>
+          <p v-if="reservationStore.promoCodeError" class="text-danger small mt-1 mb-0">
+            {{ reservationStore.promoCodeError }}
+          </p>
+          <p v-else-if="reservationStore.promoCodeDiscount" class="text-success small mt-1 mb-0">
+            Скидка {{ reservationStore.promoCodeDiscount }}% применена
+          </p>
         </div>
 
         <!-- Согласие и кнопка отправки -->
@@ -243,6 +311,8 @@ import HallMap from './HallMap.vue';
 import LegendPanel from './LegendPanel.vue';
 import { useSeatStore } from '../stores/seatStore';
 import { useReservationStore } from '../stores/reservationStore';
+import { validatePromoCode as validatePromoCodeApi } from '../services/api';
+import type { Seat } from '../types';
 
 const props = defineProps<{
   open: boolean;
@@ -297,6 +367,73 @@ const reservationError = computed(() => reservationStore.error);
 const successMessage = computed(() => reservationStore.successMessage);
 const priceFilter = computed(() => seatStore.priceFilter);
 
+const discountAmount = computed(() => {
+  if (!reservationStore.promoCodeDiscount || selectedSeats.value.length === 0) {
+    return 0;
+  }
+  // Применяем скидку только к билетам, к которым применим промокод
+  // В реальности это будет проверено на бэкенде, но для отображения применяем ко всем
+  return Math.floor(total.value * reservationStore.promoCodeDiscount / 100);
+});
+
+const calculatedTotal = computed(() => {
+  return total.value - discountAmount.value;
+});
+
+const validatePromoCodeHandler = async () => {
+  if (!reservationStore.promoCode.trim()) {
+    reservationStore.promoCodeError = 'Введите промокод';
+    reservationStore.promoCodeDiscount = null;
+    return;
+  }
+
+  if (selectedSeats.value.length === 0) {
+    reservationStore.promoCodeError = 'Выберите места для проверки промокода';
+    reservationStore.promoCodeDiscount = null;
+    return;
+  }
+
+  const categoryIds = selectedSeats.value.map(seat => seat.categoryId);
+  try {
+    const response = await validatePromoCodeApi({
+      code: reservationStore.promoCode.trim(),
+      seatCategoryIds: categoryIds
+    });
+    
+    if (response.valid && response.discountPercent) {
+      reservationStore.promoCodeDiscount = response.discountPercent;
+      reservationStore.promoCodeError = null;
+    } else {
+      reservationStore.promoCodeDiscount = null;
+      reservationStore.promoCodeError = response.message || 'Промокод недействителен';
+    }
+  } catch (error: any) {
+    reservationStore.promoCodeDiscount = null;
+    reservationStore.promoCodeError = error.response?.data?.message || 'Ошибка при проверке промокода';
+    console.error('Promo code validation error:', error);
+  }
+};
+
+// Алиас для использования в шаблоне
+const validatePromoCode = validatePromoCodeHandler;
+
+// Получаем цену билета с учетом скидки
+const getSeatPrice = (seat: Seat) => {
+  const discount = getSeatDiscount(seat);
+  return seat.priceCents - discount;
+};
+
+// Получаем размер скидки для конкретного билета
+const getSeatDiscount = (seat: Seat) => {
+  if (!reservationStore.promoCodeDiscount) {
+    return 0;
+  }
+  // Проверяем, применим ли промокод к этой категории
+  // В реальности это проверяется на бэкенде, но для отображения применяем ко всем
+  // если промокод был успешно применен
+  return Math.floor(seat.priceCents * reservationStore.promoCodeDiscount / 100);
+};
+
 onMounted(() => {
   if (props.open) {
     seatStore.init(props.concertId);
@@ -319,6 +456,21 @@ watch(
   (newLength) => {
     if (newLength === 0) {
       showCheckoutPanel.value = false; // Закрываем панель, если все места сняты
+      reservationStore.promoCodeError = null;
+      reservationStore.promoCodeDiscount = null;
+    } else if (reservationStore.promoCode.trim()) {
+      // Перепроверяем промокод при изменении выбранных мест
+      validatePromoCodeHandler();
+    }
+  }
+);
+
+watch(
+  () => reservationStore.promoCode,
+  () => {
+    if (!reservationStore.promoCode.trim()) {
+      reservationStore.promoCodeError = null;
+      reservationStore.promoCodeDiscount = null;
     }
   }
 );

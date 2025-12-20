@@ -31,7 +31,10 @@ infrastructure/.env
 
 # Database backups
 *.sql
+*.sql.gz
 infrastructure/backup.sql
+backups/
+*.backup
 
 # Setup scripts (optional - можно оставить или убрать)
 # backend/setup-local-env.sh

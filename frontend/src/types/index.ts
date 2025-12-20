@@ -5,6 +5,7 @@ export interface Seat {
   tableNumber: number;
   chairNumber: number;
   categoryName: string;
+  categoryId: number;
   categoryColorHex?: string | null;
   priceCents: number;
   priceOverrideCents?: number | null;

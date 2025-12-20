@@ -14,7 +14,10 @@ export const useReservationStore = defineStore('reservations', {
       phone: '',
       email: ''
     },
-    consentToProcessing: false
+    consentToProcessing: false,
+    promoCode: '',
+    promoCodeDiscount: null as number | null,
+    promoCodeError: null as string | null
   }),
   actions: {
     async submitReservation(concertId: number, consentToProcessing: boolean = false) {
@@ -40,13 +43,14 @@ export const useReservationStore = defineStore('reservations', {
 
       this.loading = true;
       try {
-        this.lastReservation = await createReservation({
-          concertId,
-          seatIds: Array.from(seatStore.selected.values()),
-          buyerName: this.contact.name.trim(),
-          buyerPhone: this.contact.phone.trim(),
-          buyerEmail: this.contact.email.trim()
-        });
+      this.lastReservation = await createReservation({
+        concertId,
+        seatIds: Array.from(seatStore.selected.values()),
+        buyerName: this.contact.name.trim(),
+        buyerPhone: this.contact.phone.trim(),
+        buyerEmail: this.contact.email.trim(),
+        promoCode: this.promoCode.trim() || undefined
+      });
         seatStore.applyReservationHold(this.lastReservation);
         seatStore.clearSelection();
         const reservationNumber = this.lastReservation?.reservationId;
