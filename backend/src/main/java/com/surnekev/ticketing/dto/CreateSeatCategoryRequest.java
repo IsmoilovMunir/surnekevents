@@ -13,8 +13,8 @@ public record CreateSeatCategoryRequest(
         Integer priceCents,
         String description,
         @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "Color must be in #RRGGBB format")
-        String colorHex
-) {
+        String colorHex)
+{
 }
 
 
