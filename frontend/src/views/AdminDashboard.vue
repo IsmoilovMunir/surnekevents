@@ -329,8 +329,86 @@
             <p v-if="seatConfigError" class="text-danger small mb-3">{{ seatConfigError }}</p>
                   
                   <div class="mb-4">
-                    <h4 class="h6 mb-3">Категории</h4>
-                  <div v-if="seatCategories.length === 0" class="text-body-secondary small">Категории недоступны.</div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h4 class="h6 mb-0">Категории</h4>
+                      <button 
+                        class="btn btn-sm btn-primary" 
+                        @click="showNewCategoryForm = !showNewCategoryForm"
+                        :disabled="seatConfigLoading"
+                      >
+                        <i class="bi bi-plus-lg me-1"></i>
+                        {{ showNewCategoryForm ? 'Отмена' : 'Добавить категорию' }}
+                      </button>
+                    </div>
+                    
+                    <!-- Форма создания новой категории -->
+                    <div v-if="showNewCategoryForm" class="border border-primary rounded-3 p-3 mb-3 bg-light">
+                      <h5 class="h6 mb-3">Новая категория</h5>
+                      <div class="mb-2">
+                        <label class="form-label small">Название категории <span class="text-danger">*</span></label>
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          v-model="newCategoryForm.name"
+                          placeholder="Например: VIP 15000 ₽"
+                        />
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label small">Цена (₽) <span class="text-danger">*</span></label>
+                        <input
+                          type="number"
+                          min="0"
+                          class="form-control form-control-sm"
+                          v-model="newCategoryForm.price"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label small">Описание</label>
+                        <textarea
+                          class="form-control form-control-sm"
+                          rows="2"
+                          v-model="newCategoryForm.description"
+                          placeholder="Описание категории (необязательно)"
+                        ></textarea>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label small">Цвет категории</label>
+                        <div class="d-flex align-items-center gap-2">
+                          <input
+                            type="color"
+                            class="form-control form-control-color form-control-sm flex-shrink-0 category-color-picker"
+                            v-model="newCategoryForm.color"
+                          />
+                          <input
+                            type="text"
+                            class="form-control form-control-sm text-uppercase"
+                            v-model="newCategoryForm.color"
+                            placeholder="#RRGGBB"
+                          />
+                        </div>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button 
+                          class="btn btn-sm btn-primary" 
+                          @click="createNewCategory"
+                          :disabled="seatConfigLoading || !newCategoryForm.name || !newCategoryForm.price"
+                        >
+                          <span v-if="seatConfigLoading" class="spinner-border spinner-border-sm me-2"></span>
+                          Создать категорию
+                        </button>
+                        <button 
+                          class="btn btn-sm btn-outline-secondary" 
+                          @click="cancelNewCategory"
+                          :disabled="seatConfigLoading"
+                        >
+                          Отмена
+                        </button>
+                      </div>
+                      <p v-if="newCategoryError" class="text-danger small mt-2 mb-0">{{ newCategoryError }}</p>
+                    </div>
+                    
+                  <div v-if="seatCategories.length === 0 && !showNewCategoryForm" class="text-body-secondary small">Категории недоступны.</div>
                     <div v-for="category in seatCategories" :key="category.id" class="border rounded-3 p-3 mb-3">
                     <div class="d-flex align-items-center gap-2 fw-semibold mb-2">
                       <span
@@ -468,6 +546,167 @@
                           <i v-else class="bi bi-arrow-counterclockwise me-1"></i>
                           Вернуть в продажу
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="activeSection === 'promo-codes'">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-body-secondary small">Управление промокодами</span>
+                    <button class="btn btn-outline-primary btn-sm" :disabled="promoCodesLoading" @click="loadPromoCodes">
+                      <span v-if="promoCodesLoading" class="spinner-border spinner-border-sm me-2"></span>
+                      Обновить
+                    </button>
+                  </div>
+                  <p v-if="promoCodesError" class="text-danger small mb-3">{{ promoCodesError }}</p>
+                  
+                  <div class="mb-4">
+                    <button class="btn btn-primary btn-sm" @click="showCreatePromoCode = true">
+                      <i class="bi bi-plus-lg me-1"></i>
+                      Создать промокод
+                    </button>
+                  </div>
+
+                  <div v-if="promoCodes.length === 0" class="text-body-secondary small mb-3">
+                    Промокоды не найдены
+                  </div>
+                  <div v-else class="list-group">
+                    <div
+                      v-for="promoCode in promoCodes"
+                      :key="promoCode.id"
+                      class="list-group-item border rounded-3 p-3 mb-2"
+                    >
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                          <div class="fw-semibold small mb-1">
+                            <code>{{ promoCode.code }}</code>
+                            <span v-if="!promoCode.active" class="badge bg-secondary ms-2">Неактивен</span>
+                          </div>
+                          <div class="text-body-secondary small">
+                            Скидка: {{ promoCode.discountPercent }}%
+                          </div>
+                          <div class="text-body-secondary small">
+                            Использовано: {{ promoCode.usedCount }}
+                            <span v-if="promoCode.usageLimit">/ {{ promoCode.usageLimit }}</span>
+                          </div>
+                          <div class="text-body-secondary small">
+                            Действителен: {{ formatDate(promoCode.validFrom) }}
+                            <span v-if="promoCode.validTo"> - {{ formatDate(promoCode.validTo) }}</span>
+                          </div>
+                          <div v-if="promoCode.applicableCategoryIds && promoCode.applicableCategoryIds.length > 0" class="text-body-secondary small">
+                            Категории: {{ promoCode.applicableCategoryIds.length }}
+                          </div>
+                          <div v-else class="text-body-secondary small">
+                            Применим ко всем категориям
+                          </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                          <button class="btn btn-outline-primary btn-sm" @click="editPromoCode(promoCode)">
+                            <i class="bi bi-pencil"></i>
+                          </button>
+                          <button class="btn btn-outline-danger btn-sm" @click="deletePromoCodeHandler(promoCode.id)">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Модальное окно создания/редактирования -->
+                  <div v-if="showCreatePromoCode || editingPromoCode" class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" @click.self="closePromoCodeModal">
+                    <div class="modal-dialog" @click.stop>
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">{{ editingPromoCode ? 'Редактировать промокод' : 'Создать промокод' }}</h5>
+                          <button type="button" class="btn-close" @click="closePromoCodeModal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <form @submit.prevent="savePromoCode">
+                            <div class="mb-3">
+                              <label class="form-label small">Код промокода</label>
+                              <input
+                                v-model="promoCodeForm.code"
+                                class="form-control form-control-sm"
+                                required
+                                placeholder="PROMO2024"
+                              />
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label small">Процент скидки (1-100)</label>
+                              <input
+                                v-model.number="promoCodeForm.discountPercent"
+                                type="number"
+                                min="1"
+                                max="100"
+                                class="form-control form-control-sm"
+                                required
+                              />
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label small">Применим к категориям (оставьте пустым для всех)</label>
+                              <select
+                                v-model="promoCodeForm.applicableCategoryIds"
+                                class="form-select form-select-sm"
+                                multiple
+                                size="5"
+                              >
+                                <option v-for="category in seatCategories" :key="category.id" :value="category.id">
+                                  {{ category.name }}
+                                </option>
+                              </select>
+                              <small class="text-body-secondary">Выберите категории или оставьте пустым для всех</small>
+                            </div>
+                            <div class="mb-3">
+                              <div class="form-check">
+                                <input
+                                  v-model="promoCodeForm.active"
+                                  class="form-check-input"
+                                  type="checkbox"
+                                  id="promoCodeActive"
+                                />
+                                <label class="form-check-label small" for="promoCodeActive">
+                                  Активен
+                                </label>
+                              </div>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label small">Действителен с</label>
+                              <input
+                                v-model="promoCodeForm.validFrom"
+                                type="datetime-local"
+                                class="form-control form-control-sm"
+                              />
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label small">Действителен до (необязательно)</label>
+                              <input
+                                v-model="promoCodeForm.validTo"
+                                type="datetime-local"
+                                class="form-control form-control-sm"
+                              />
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label small">Лимит использований (необязательно)</label>
+                              <input
+                                v-model.number="promoCodeForm.usageLimit"
+                                type="number"
+                                min="1"
+                                class="form-control form-control-sm"
+                              />
+                            </div>
+                            <div class="d-flex gap-2">
+                              <button type="submit" class="btn btn-primary btn-sm" :disabled="promoCodeSaving">
+                                <span v-if="promoCodeSaving" class="spinner-border spinner-border-sm me-2"></span>
+                                Сохранить
+                              </button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" @click="closePromoCodeModal">
+                                Отмена
+                              </button>
+                            </div>
+                            <p v-if="promoCodeSaveError" class="text-danger small mt-2 mb-0">{{ promoCodeSaveError }}</p>
+                          </form>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -700,6 +939,7 @@ import {
   cancelTicketsBulk,
   fetchSeatCategories,
   fetchSeatTableAssignments,
+  createSeatCategory,
   updateSeatCategory,
   assignSeatCategory,
   overrideSeatPrice,
@@ -710,7 +950,14 @@ import {
   searchTickets,
   refundTicket,
   fetchUsedTickets,
-  revertTicketStatus
+  revertTicketStatus,
+  fetchPromoCodes,
+  createPromoCode,
+  updatePromoCode,
+  deletePromoCode,
+  type PromoCodeDto,
+  type CreatePromoCodeRequest,
+  type UpdatePromoCodeRequest
 } from '../services/api';
 import type { Ticket, SeatCategorySummary, SeatTableAssignment, AdminUser } from '../types';
 
@@ -764,6 +1011,14 @@ const seatTables = ref<SeatTableAssignment[]>([]);
 const seatConfigLoading = ref(false);
 const seatConfigError = ref('');
 const categoryForms = ref<Record<number, CategoryFormState>>({});
+const showNewCategoryForm = ref(false);
+const newCategoryForm = ref<CategoryFormState>({
+  name: '',
+  price: '',
+  description: '',
+  color: '#d4af37'
+});
+const newCategoryError = ref('');
 const tableSelections = ref<Record<number, number | null>>({});
 const tableOverrideInputs = ref<Record<number, string>>({});
 const tableSeatSelection = ref<Record<number, string>>({});
@@ -772,6 +1027,24 @@ const templateSelections = ref<Record<string, number | null>>({
   cat1: null,
   cat2: null
 });
+
+// Промокоды
+const promoCodes = ref<PromoCodeDto[]>([]);
+const promoCodesLoading = ref(false);
+const promoCodesError = ref('');
+const showCreatePromoCode = ref(false);
+const editingPromoCode = ref<PromoCodeDto | null>(null);
+const promoCodeForm = ref<CreatePromoCodeRequest & { id?: number }>({
+  code: '',
+  discountPercent: 10,
+  applicableCategoryIds: null,
+  active: true,
+  validFrom: null,
+  validTo: null,
+  usageLimit: null
+});
+const promoCodeSaving = ref(false);
+const promoCodeSaveError = ref('');
 
 const ticketSections = [
   { key: 'RESERVED', label: 'Черновики' },
@@ -815,6 +1088,13 @@ const dashboardSections = computed(() => {
       description: 'Управление менеджерами',
       icon: 'bi bi-people',
       iconClass: 'text-warning'
+    },
+    {
+      key: 'promo-codes',
+      title: 'Промокоды',
+      description: 'Создание и управление промокодами',
+      icon: 'bi bi-tag',
+      iconClass: 'text-success'
     }
   ];
   
@@ -915,6 +1195,9 @@ const openSection = (key: string) => {
   } else if (key === 'seat-config') {
     loadSeatConfig();
   } else if (key === 'users') {
+    loadUsers();
+  } else if (key === 'promo-codes') {
+    loadPromoCodes();
     loadUsers();
   } else if (key === 'refunds') {
     clearRefundSearch();
@@ -1306,6 +1589,103 @@ const formatRub = (cents: number) =>
     cents / 100
   );
 
+const loadPromoCodes = async () => {
+  promoCodesLoading.value = true;
+  promoCodesError.value = '';
+  try {
+    promoCodes.value = await fetchPromoCodes();
+  } catch (error) {
+    promoCodesError.value = 'Не удалось загрузить промокоды';
+  } finally {
+    promoCodesLoading.value = false;
+  }
+};
+
+const editPromoCode = (promoCode: PromoCodeDto) => {
+  editingPromoCode.value = promoCode;
+  promoCodeForm.value = {
+    code: promoCode.code,
+    discountPercent: promoCode.discountPercent,
+    applicableCategoryIds: promoCode.applicableCategoryIds && promoCode.applicableCategoryIds.length > 0 
+      ? [...promoCode.applicableCategoryIds] 
+      : null,
+    active: promoCode.active,
+    validFrom: promoCode.validFrom ? new Date(promoCode.validFrom).toISOString().slice(0, 16) : null,
+    validTo: promoCode.validTo ? new Date(promoCode.validTo).toISOString().slice(0, 16) : null,
+    usageLimit: promoCode.usageLimit || null,
+    id: promoCode.id
+  };
+  showCreatePromoCode.value = true;
+};
+
+const closePromoCodeModal = () => {
+  showCreatePromoCode.value = false;
+  editingPromoCode.value = null;
+  promoCodeForm.value = {
+    code: '',
+    discountPercent: 10,
+    applicableCategoryIds: null,
+    active: true,
+    validFrom: null,
+    validTo: null,
+    usageLimit: null
+  };
+  promoCodeSaveError.value = '';
+};
+
+const savePromoCode = async () => {
+  promoCodeSaving.value = true;
+  promoCodeSaveError.value = '';
+  try {
+    if (editingPromoCode.value) {
+      const updateData: UpdatePromoCodeRequest = {
+        code: promoCodeForm.value.code.toUpperCase(),
+        discountPercent: promoCodeForm.value.discountPercent,
+        applicableCategoryIds: promoCodeForm.value.applicableCategoryIds && promoCodeForm.value.applicableCategoryIds.length > 0
+          ? promoCodeForm.value.applicableCategoryIds
+          : null,
+        active: promoCodeForm.value.active,
+        validFrom: promoCodeForm.value.validFrom ? new Date(promoCodeForm.value.validFrom).toISOString() : null,
+        validTo: promoCodeForm.value.validTo ? new Date(promoCodeForm.value.validTo).toISOString() : null,
+        usageLimit: promoCodeForm.value.usageLimit || null
+      };
+      await updatePromoCode(editingPromoCode.value.id, updateData);
+    } else {
+      const createData: CreatePromoCodeRequest = {
+        code: promoCodeForm.value.code.toUpperCase(),
+        discountPercent: promoCodeForm.value.discountPercent,
+        applicableCategoryIds: promoCodeForm.value.applicableCategoryIds && promoCodeForm.value.applicableCategoryIds.length > 0
+          ? promoCodeForm.value.applicableCategoryIds
+          : null,
+        active: promoCodeForm.value.active,
+        validFrom: promoCodeForm.value.validFrom ? new Date(promoCodeForm.value.validFrom).toISOString() : null,
+        validTo: promoCodeForm.value.validTo ? new Date(promoCodeForm.value.validTo).toISOString() : null,
+        usageLimit: promoCodeForm.value.usageLimit || null
+      };
+      await createPromoCode(createData);
+    }
+    
+    await loadPromoCodes();
+    closePromoCodeModal();
+  } catch (error: any) {
+    promoCodeSaveError.value = error.response?.data?.message || 'Не удалось сохранить промокод';
+  } finally {
+    promoCodeSaving.value = false;
+  }
+};
+
+const deletePromoCodeHandler = async (id: number) => {
+  if (!confirm('Вы уверены, что хотите удалить этот промокод?')) {
+    return;
+  }
+  try {
+    await deletePromoCode(id);
+    await loadPromoCodes();
+  } catch (error) {
+    promoCodesError.value = 'Не удалось удалить промокод';
+  }
+};
+
 const getCategoryDisplayName = (category: SeatCategorySummary) => {
   // Убираем цену из названия категории (удаляем все цифры, пробелы и символ ₽)
   return category.name.replace(/\s*\d+[\s₽]*/g, '').trim() || category.name;
@@ -1414,6 +1794,50 @@ const saveCategory = async (categoryId: number) => {
   } catch (error) {
     seatConfigError.value = 'Не удалось обновить категорию';
   }
+};
+
+const createNewCategory = async () => {
+  if (!newCategoryForm.value.name.trim()) {
+    newCategoryError.value = 'Укажите название категории';
+    return;
+  }
+  const priceCents = parsePriceInput(newCategoryForm.value.price);
+  if (priceCents === null || priceCents < 0) {
+    newCategoryError.value = 'Укажите корректную цену (в рублях)';
+    return;
+  }
+  const colorHex = normalizeHexColor(newCategoryForm.value.color);
+  if (!colorHex) {
+    newCategoryError.value = 'Укажите цвет в формате #RRGGBB';
+    return;
+  }
+  newCategoryError.value = '';
+  seatConfigLoading.value = true;
+  try {
+    await createSeatCategory({
+      name: newCategoryForm.value.name.trim(),
+      priceCents,
+      description: newCategoryForm.value.description || null,
+      colorHex
+    });
+    await loadSeatConfig();
+    cancelNewCategory();
+  } catch (error: any) {
+    newCategoryError.value = error.response?.data?.message || 'Не удалось создать категорию';
+  } finally {
+    seatConfigLoading.value = false;
+  }
+};
+
+const cancelNewCategory = () => {
+  showNewCategoryForm.value = false;
+  newCategoryForm.value = {
+    name: '',
+    price: '',
+    description: '',
+    color: '#d4af37'
+  };
+  newCategoryError.value = '';
 };
 
 const assignTables = async (tableNumbers: number[], categoryId: number | null) => {

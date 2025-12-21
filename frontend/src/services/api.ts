@@ -94,6 +94,13 @@ export const fetchSeatCategories = async () => {
   return data;
 };
 
+export const createSeatCategory = async (
+  payload: { name: string; priceCents: number; description?: string | null; colorHex?: string | null }
+) => {
+  const { data } = await api.post<SeatCategorySummary>('/admin/seat-config/categories', payload);
+  return data;
+};
+
 export const updateSeatCategory = async (
   categoryId: number,
   payload: { name: string; priceCents: number; description?: string | null; colorHex?: string | null }
@@ -201,6 +208,60 @@ export const submitPartnerRequest = async (request: {
 }) => {
   const { data } = await apiClient.post<{ message: string }>('/partner-request', request);
   return data;
+};
+
+// Promo Code API
+export interface PromoCodeDto {
+  id: number;
+  code: string;
+  discountPercent: number;
+  applicableCategoryIds: number[] | null;
+  active: boolean;
+  validFrom: string; // ISO 8601 date string
+  validTo: string | null; // ISO 8601 date string
+  usageLimit: number | null;
+  usedCount: number;
+  createdAt: string; // ISO 8601 date string
+  updatedAt: string; // ISO 8601 date string
+}
+
+export interface CreatePromoCodeRequest {
+  code: string;
+  discountPercent: number;
+  applicableCategoryIds: number[] | null;
+  active: boolean;
+  validFrom: string | null; // ISO 8601 date string
+  validTo: string | null; // ISO 8601 date string
+  usageLimit: number | null;
+}
+
+export interface UpdatePromoCodeRequest {
+  code?: string | null;
+  discountPercent?: number | null;
+  applicableCategoryIds?: number[] | null;
+  active?: boolean | null;
+  validFrom?: string | null; // ISO 8601 date string
+  validTo?: string | null; // ISO 8601 date string
+  usageLimit?: number | null;
+}
+
+export const fetchPromoCodes = async () => {
+  const { data } = await api.get<PromoCodeDto[]>('/promo-codes/admin');
+  return data;
+};
+
+export const createPromoCode = async (request: CreatePromoCodeRequest) => {
+  const { data } = await api.post<PromoCodeDto>('/promo-codes/admin', request);
+  return data;
+};
+
+export const updatePromoCode = async (id: number, request: UpdatePromoCodeRequest) => {
+  const { data } = await api.put<PromoCodeDto>(`/promo-codes/admin/${id}`, request);
+  return data;
+};
+
+export const deletePromoCode = async (id: number) => {
+  await api.delete(`/promo-codes/admin/${id}`);
 };
 
 export const apiClient = api;
