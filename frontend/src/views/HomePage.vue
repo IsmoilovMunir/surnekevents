@@ -417,6 +417,13 @@
       </div>
     </section>
 
+    <!-- Top.Mail.Ru counter noscript -->
+    <noscript>
+      <div>
+        <img src="https://top-fwz1.mail.ru/counter?id=3728352;js=na" style="position:absolute;left:-9999px;" alt="Top.Mail.Ru" />
+      </div>
+    </noscript>
+
     <!-- Финальный блок -->
     <section class="final-section py-5 py-md-4 py-sm-3">
       <div class="final-background-decoration"></div>
@@ -831,7 +838,7 @@
       </div>
     </section>
 
-    <SeatMapModal :open="modalOpen" :concert-id="concertId" @close="modalOpen = false" />
+    <SeatMapModal :open="modalOpen" :concert-id="concertId" @close="closeModal" />
 
     <!-- Partner Request Modal -->
     <div v-if="showPartnerRequestModal" class="sponsor-modal-overlay" @click="closePartnerRequestModal">
@@ -970,7 +977,7 @@
   </div>
   
   <!-- Нижнее меню навигации - вне landing-page для правильного позиционирования -->
-  <nav v-if="navigationMenu && navigationMenu.length > 0" class="bottom-nav" ref="bottomNavRef" aria-hidden="false">
+  <nav v-if="showNavigationMenu && navigationMenu && navigationMenu.length > 0" class="bottom-nav" ref="bottomNavRef" aria-hidden="false">
     <a
       v-for="(item, index) in navigationMenu"
       :key="`nav-${index}-${item.id}`"
@@ -1008,6 +1015,7 @@ const concertId = 1;
 const modalOpen = ref(false);
 const selectedSponsor = ref<any>(null);
 const showPartnerRequestModal = ref(false);
+const showNavigationMenu = ref(true);
 const partnerRequestForm = ref({
   fullName: '',
   company: '',
@@ -1023,7 +1031,7 @@ const activeSection = ref<string>('');
 // Меню навигации для секций
 const navigationMenu = ref([
   { id: 'hero', label: 'Главное', icon: 'bi bi-house-fill' },
-  { id: 'artist', label: 'Артисти', icon: 'bi bi-music-player-fill' },
+  { id: 'artist', label: 'Атисты', icon: 'bi bi-music-player-fill' },
   { id: 'tickets', label: 'Билеты', icon: 'bi bi-ticket-perforated-fill' },
   { id: 'partners', label: 'Партнеры', icon: 'bi bi-people-fill' },
   { id: 'contacts', label: 'Контакты', icon: 'bi bi-telephone-fill' }
@@ -1151,6 +1159,29 @@ onMounted(() => {
   // Добавляем обработчик прокрутки для отслеживания активной секции
   window.addEventListener('scroll', handleScroll);
   handleScroll(); // Вызываем сразу для установки начальной активной секции
+  
+  // Top.Mail.Ru counter
+  const _tmr = (window as any)._tmr || ((window as any)._tmr = []);
+  _tmr.push({id: "3728352", type: "pageView", start: (new Date()).getTime(), pid: "USER_ID"});
+  (function (d: Document, w: Window, id: string) {
+    if (d.getElementById(id)) return;
+    const ts = d.createElement("script");
+    ts.type = "text/javascript";
+    ts.async = true;
+    ts.id = id;
+    ts.src = "https://top-fwz1.mail.ru/js/code.js";
+    const f = function () {
+      const s = d.getElementsByTagName("script")[0];
+      if (s && s.parentNode) {
+        s.parentNode.insertBefore(ts, s);
+      }
+    };
+    if ((w as any).opera == "[object Opera]") {
+      d.addEventListener("DOMContentLoaded", f, false);
+    } else {
+      f();
+    }
+  })(document, window, "tmr-code");
 });
 
 onUnmounted(() => {
@@ -1279,6 +1310,12 @@ const playGeneratedMusic = () => {
 
 const openModal = () => {
   modalOpen.value = true;
+  showNavigationMenu.value = false;
+};
+
+const closeModal = () => {
+  modalOpen.value = false;
+  showNavigationMenu.value = true;
 };
 
 const formattedDate = computed(() => {
@@ -1428,6 +1465,11 @@ const videos = [
     src: 'https://vk.com/video_ext.php?oid=137564879&id=456239898',
     width: '1080',
     height: '1920'
+  },
+  {
+    src: 'https://vk.com/video_ext.php?oid=137564879&id=456239899&autoplay=1',
+    width: '325',
+    height: '646'
   }
 ];
 
