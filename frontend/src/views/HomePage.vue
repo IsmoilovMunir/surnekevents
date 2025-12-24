@@ -999,7 +999,7 @@ import asakiLogo from '../assets/asaki.svg';
 import drnematboevLogo from '../assets/drnematboev.svg';
 import smartxLogo from '../assets/smartx.svg';
 import chidSvgLogo from '../assets/chid.svg';
-import safarImage from '../assets/safarr.png';
+import safarImage from '@/assets/safarr.png';
 import rizoImage from '../assets/rizo.png';
 import furqatImage from '../assets/furqat.png';
 import organizerLogo from '../assets/log.svg';
