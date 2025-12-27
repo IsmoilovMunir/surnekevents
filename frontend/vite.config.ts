@@ -7,7 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
-    }
+    },
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue']
   },
   server: {
     port: 4173,
@@ -23,8 +24,21 @@ export default defineConfig({
         changeOrigin: true
       },
       '/ws-seat-status': {
-        target: 'http://localhost:8080',
-        ws: true
+        target: 'ws://localhost:8080',
+        ws: true,
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('WebSocket proxy error:', err);
+          });
+          proxy.on('open', () => {
+            console.log('WebSocket proxy connection opened');
+          });
+          proxy.on('close', () => {
+            console.log('WebSocket proxy connection closed');
+          });
+        }
       }
     }
   },

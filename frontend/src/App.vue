@@ -1,5 +1,6 @@
 <template>
   <div class="app-shell">
+    <SplashScreen />
     <header class="app-navbar navbar navbar-expand-lg bg-body">
       <div class="container">
         <RouterLink class="navbar-brand fw-semibold d-flex align-items-center" to="/">
@@ -14,7 +15,7 @@
     <main class="flex-grow-1">
       <RouterView />
     </main>
-    <footer class="py-4 border-top bg-body-tertiary">
+    <footer class="py-4 border-top bg-body-tertiary footer-with-menu">
       <div class="container text-center small text-body-secondary">
         <div>© {{ new Date().getFullYear() }}. Все права защищены.</div>
         <div class="mt-2">
@@ -36,6 +37,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
 import logoImg from '@/assets/log.svg';
+import SplashScreen from '@/components/SplashScreen.vue';
 </script>
 
 <style scoped>
@@ -79,6 +81,12 @@ import logoImg from '@/assets/log.svg';
 .footer-creator-link:hover {
   color: #6f42c1;
   border-bottom-color: #6f42c1;
+}
+
+.footer-with-menu {
+  margin-bottom: 100px; /* Отступ для нижнего меню навигации */
+  position: relative;
+  z-index: 1;
 }
 </style>
 
