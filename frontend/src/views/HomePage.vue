@@ -983,7 +983,7 @@
   </div>
   
   <!-- Нижнее меню навигации - вне landing-page для правильного позиционирования -->
-  <nav v-if="showNavigationMenu && navigationMenu && navigationMenu.length > 0" class="bottom-nav" ref="bottomNavRef" aria-hidden="false">
+  <nav v-if="showNavigationMenu && !modalOpen && navigationMenu && navigationMenu.length > 0" class="bottom-nav" ref="bottomNavRef" aria-hidden="false">
     <a
       v-for="(item, index) in navigationMenu"
       :key="`nav-${index}-${item.id}`"
