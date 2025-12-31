@@ -59,23 +59,6 @@
           class="splash-poster"
         />
       </div>
-      <div class="splash-promo">
-        <button class="discount-badge-hero btn px-3 py-2" type="button">
-          <span class="fw-semibold d-block">
-            Акция действует до: <span class="discount-date">29.12.2025</span>
-          </span>
-          <span v-if="!isDiscountExpired" class="small d-block">
-            Осталось:
-            <strong>{{ discountDaysLeft }}</strong> д
-            <strong>{{ discountHoursLeft }}</strong> ч
-            <strong>{{ discountMinutesLeft }}</strong> м
-            <strong>{{ discountSecondsLeft }}</strong> с
-          </span>
-          <span v-else class="small d-block">
-            Акция завершена
-          </span>
-        </button>
-      </div>
       <div class="splash-body">
         <div class="splash-title">
           Новогодний банкет-вечер с Сафармухаммадом в Москве
@@ -95,9 +78,9 @@
           </div>
           <div class="age-pill">Вход 16+</div>
         </div>
-        <div class="splash-price">
+        <div class="splash-price" v-if="formattedMinPrice !== null">
           <span class="price-label">Билеты от</span>
-          <span class="price-value">5 000 ₽</span>
+          <span class="price-value">{{ formattedMinPrice }}</span>
         </div>
         <button 
           class="btn-buy" 
@@ -112,6 +95,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { useConcertStore } from '../stores/concertStore';
+import { storeToRefs } from 'pinia';
 import postImage from '@/assets/post.png';
 import chidLogo from '@/assets/chid.svg';
 import asakiLogo from '@/assets/asaki.svg';
@@ -131,46 +116,26 @@ const emit = defineEmits<{
 const isVisible = ref(false);
 const posterImage = postImage;
 
+// Получаем данные о концерте из store
+const concertStore = useConcertStore();
+const { concert } = storeToRefs(concertStore);
+
+// Форматирование минимальной цены
+const formattedMinPrice = computed(() => {
+  if (!concert.value || concert.value.minTicketPriceCents === null || concert.value.minTicketPriceCents === undefined) {
+    return null;
+  }
+  // Проверяем, что значение валидное число
+  if (isNaN(concert.value.minTicketPriceCents) || concert.value.minTicketPriceCents < 0) {
+    return null;
+  }
+  const rubles = Math.floor(concert.value.minTicketPriceCents / 100);
+  // Если цена равна 0, все равно показываем её
+  return `${rubles.toLocaleString('ru-RU')} ₽`;
+});
+
 // Таймер для автоматического закрытия через 7 секунд
 let autoCloseTimerId: number | null = null;
-
-// Обратный отсчёт скидки до 29.12.2025 23:59:59
-const discountTargetDate = new Date('2025-12-29T23:59:59');
-const discountNow = ref(new Date());
-let discountTimerId: number | null = null;
-
-const updateDiscountTime = () => {
-  discountNow.value = new Date();
-};
-
-const discountDiffMs = computed(
-  () => discountTargetDate.getTime() - discountNow.value.getTime()
-);
-
-const isDiscountExpired = computed(() => discountDiffMs.value <= 0);
-
-const discountDaysLeft = computed(() => {
-  if (isDiscountExpired.value) return 0;
-  return Math.floor(discountDiffMs.value / (1000 * 60 * 60 * 24));
-});
-
-const discountHoursLeft = computed(() => {
-  if (isDiscountExpired.value) return 0;
-  const remaining = discountDiffMs.value % (1000 * 60 * 60 * 24);
-  return Math.floor(remaining / (1000 * 60 * 60));
-});
-
-const discountMinutesLeft = computed(() => {
-  if (isDiscountExpired.value) return 0;
-  const remaining = discountDiffMs.value % (1000 * 60 * 60);
-  return Math.floor(remaining / (1000 * 60));
-});
-
-const discountSecondsLeft = computed(() => {
-  if (isDiscountExpired.value) return 0;
-  const remaining = discountDiffMs.value % (1000 * 60);
-  return Math.floor(remaining / 1000);
-});
 
 // Отслеживаем изменение видимости и управляем меню
 watch(isVisible, (newValue) => {
@@ -207,9 +172,15 @@ const handleBuyClick = () => {
   close();
 };
 
-onMounted(() => {
-  // Запускаем таймер обратного отсчета
-  discountTimerId = window.setInterval(updateDiscountTime, 1000);
+onMounted(async () => {
+  // Загружаем концерт, если его еще нет в store
+  if (!concert.value) {
+    try {
+      await concertStore.load(1); // ID концерта по умолчанию
+    } catch (error) {
+      console.error('Failed to load concert:', error);
+    }
+  }
   
   // Показываем splash при каждой загрузке страницы с небольшой задержкой для плавности
   setTimeout(() => {
@@ -225,9 +196,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (discountTimerId !== null) {
-    clearInterval(discountTimerId);
-  }
   if (autoCloseTimerId !== null) {
     clearTimeout(autoCloseTimerId);
   }
@@ -401,104 +369,19 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: block;
   background: transparent;
-  max-height: 25vh;
   padding: 0;
-  padding-top: 15px;
   margin: 0 auto;
 }
 
 .splash-poster {
-  width: 90%;
-  height: auto;
-  max-height: 25vh;
-  display: block;
-  object-fit: contain;
-  object-position: center;
-  margin: 0 auto;
-}
-
-.splash-promo {
-  padding: 8px 0;
-  text-align: center;
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 0;
-  background: linear-gradient(135deg, rgba(24, 114, 63, 0.05) 0%, rgba(31, 157, 108, 0.05) 100%);
   width: 100%;
-}
-
-.discount-badge-hero {
-  border-radius: 12px;
-  background: linear-gradient(135deg, #18723F 0%, #1f9d6c 100%);
-  color: #fff;
-  font-size: 0.75rem;
-  box-shadow: 0 4px 16px rgba(24, 114, 63, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  text-transform: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  object-position: center;
   margin: 0;
-  cursor: default;
-  gap: 4px;
-  width: calc(100% - 40px);
-  max-width: 100%;
-  transition: all 0.3s ease;
 }
 
-.discount-badge-hero:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(24, 114, 63, 0.5), 0 3px 10px rgba(0, 0, 0, 0.2);
-}
-
-.discount-badge-hero .fw-semibold {
-  font-size: 0.85rem;
-  color: #fff;
-  line-height: 1.3;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-}
-
-.discount-badge-hero .discount-date {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 2px 6px;
-  border-radius: 6px;
-  display: inline-block;
-  margin-left: 4px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.3px;
-}
-
-.discount-badge-hero .small {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.95);
-  line-height: 1.4;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.discount-badge-hero strong {
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 2px 5px;
-  border-radius: 5px;
-  margin: 0 2px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
 
 .splash-body {
   padding: 16px 20px 20px;
@@ -676,54 +559,17 @@ onUnmounted(() => {
   .splash-media {
     width: 100%;
     border-radius: 16px 16px 0 0;
-    max-height: 25vh;
-    padding-top: 8px;
+    padding: 0;
     order: 3;
     margin: 0 auto;
   }
 
   .splash-poster {
-    width: 90%;
-    max-height: 25vh;
-    object-fit: contain;
-    margin: 0 auto;
+    width: 100%;
+    object-fit: cover;
+    margin: 0;
   }
 
-  .splash-promo {
-    padding: 6px 0;
-    order: 4;
-  }
-
-  .discount-badge-hero {
-    font-size: 0.7rem;
-    padding: 8px 12px;
-    width: calc(100% - 24px);
-    gap: 4px;
-    border-radius: 10px;
-  }
-
-  .discount-badge-hero .fw-semibold {
-    font-size: 0.8rem;
-    line-height: 1.2;
-  }
-
-  .discount-badge-hero .discount-date {
-    font-size: 0.95rem;
-    padding: 1px 5px;
-    margin-left: 3px;
-  }
-
-  .discount-badge-hero .small {
-    font-size: 0.7rem;
-    line-height: 1.3;
-    gap: 3px;
-  }
-
-  .discount-badge-hero strong {
-    font-size: 0.8rem;
-    padding: 1px 4px;
-    margin: 0 2px;
-  }
 
   .splash-body {
     padding: 10px 12px 12px;

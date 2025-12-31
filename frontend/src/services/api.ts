@@ -28,6 +28,11 @@ export const fetchConcert = async (concertId: number) => {
   return data;
 };
 
+export const fetchConcertCategories = async (concertId: number) => {
+  const { data } = await api.get<SeatCategorySummary[]>(`/concerts/${concertId}/categories`);
+  return data;
+};
+
 export const fetchSeats = async (concertId: number) => {
   const { data } = await api.get<Seat[]>(`/concerts/${concertId}/seats`);
   return data;

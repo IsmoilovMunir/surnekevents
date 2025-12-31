@@ -6,6 +6,7 @@
       :description="concert.description"
       :date="formattedDate"
       :venue="concert.venue"
+      :min-ticket-price-cents="concert.minTicketPriceCents"
       @cta="openModal"
     />
 
@@ -260,7 +261,7 @@
               <p class="tickets-intro">Категории билетов:</p>
             </div>
             
-            <div class="tickets-grid">
+            <div class="tickets-grid" v-if="tickets && tickets.length > 0">
               <div 
                 class="ticket-card" 
                 v-for="(ticket, index) in tickets" 
@@ -1006,7 +1007,8 @@ import SeatMapModal from '../components/SeatMapModal.vue';
 import CustomVideoPlayer from '@/components/CustomVideoPlayer.vue';
 import { useConcertStore } from '../stores/concertStore';
 import { storeToRefs } from 'pinia';
-import { submitPartnerRequest as apiSubmitPartnerRequest } from '../services/api';
+import { submitPartnerRequest as apiSubmitPartnerRequest, fetchConcertCategories } from '../services/api';
+import type { SeatCategorySummary } from '../types';
 import chidLogo from '../assets/chid.svg';
 import asakiLogo from '../assets/asaki.svg';
 import drnematboevLogo from '../assets/drnematboev.svg';
@@ -1148,14 +1150,26 @@ const handleScroll = () => {
 const concertStore = useConcertStore();
 const { concert } = storeToRefs(concertStore);
 
+const seatCategories = ref<SeatCategorySummary[]>([]);
+
 const musicAudio = ref<HTMLAudioElement | null>(null);
 const musicTimeout = ref<NodeJS.Timeout | null>(null);
 const audioContext = ref<AudioContext | null>(null);
 const isPlayingMusic = ref(false);
 const currentAudioSource = ref<AudioBufferSourceNode | null>(null);
 
-onMounted(() => {
-  concertStore.load(concertId);
+onMounted(async () => {
+  await concertStore.load(concertId);
+  // Загружаем категории мест
+  try {
+    const categories = await fetchConcertCategories(concertId);
+    console.log('Loaded categories:', categories);
+    seatCategories.value = categories;
+  } catch (error) {
+    console.error('Failed to load seat categories:', error);
+    // Fallback на пустой массив если не удалось загрузить
+    seatCategories.value = [];
+  }
   // Инициализируем AudioContext для генерации звука
   try {
     audioContext.value = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -1544,12 +1558,29 @@ const foodCategories = [
   }
 ];
 
-const tickets = [
-  { price: '5 000', vip: false },
-  { price: '6 000', vip: false },
-  { price: '7 000', vip: false },
-  { price: '10 000', vip: true }
-];
+// Преобразуем категории мест в формат для отображения билетов
+const tickets = computed(() => {
+  console.log('Computing tickets from categories:', seatCategories.value);
+  if (!seatCategories.value || seatCategories.value.length === 0) {
+    console.log('No categories available');
+    return [];
+  }
+  const result = seatCategories.value.map((category) => {
+    const rubles = Math.floor(category.priceCents / 100);
+    const formattedPrice = rubles.toLocaleString('ru-RU');
+    // Определяем VIP по названию категории или цене (например, самая дорогая)
+    const isVip = category.name.toLowerCase().includes('vip') || 
+                  category.name.toLowerCase().includes('golden') ||
+                  category.name.toLowerCase().includes('золот');
+    return {
+      price: formattedPrice,
+      vip: isVip,
+      categoryName: category.name
+    };
+  });
+  console.log('Computed tickets:', result);
+  return result;
+});
 
 const urgencyFeatures = [
   {

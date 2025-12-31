@@ -34,6 +34,7 @@ export interface Concert {
   concertDate: string;
   venue: string;
   posterUrl?: string | null;
+  minTicketPriceCents?: number | null;
 }
 
 export interface ReservationResponse {

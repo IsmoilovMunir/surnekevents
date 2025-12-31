@@ -8,7 +8,8 @@ public record ConcertDto(
         String description,
         Instant concertDate,
         String venue,
-        String posterUrl
+        String posterUrl,
+        Integer minTicketPriceCents
 ) {
 }
 

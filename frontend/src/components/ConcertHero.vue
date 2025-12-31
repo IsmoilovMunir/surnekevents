@@ -37,9 +37,9 @@
                 </div>
               </div>
 
-              <div class="hero-price mb-4">
+              <div class="hero-price mb-4" v-if="formattedMinPrice !== null">
                 <span class="price-label">Билеты от</span>
-                <span class="price-value">5 000 ₽</span>
+                <span class="price-value">{{ formattedMinPrice }}</span>
               </div>
 
               <div class="d-flex gap-3 flex-wrap mt-4 mb-3 buttons-container">
@@ -69,6 +69,7 @@ const props = defineProps<{
   date: string;
   venue: string;
   poster?: string;
+  minTicketPriceCents?: number | null;
 }>();
 
 // Разделяем title на две части: "Новогодний вечер с" и "SAFARMUHAMMAD"
@@ -158,6 +159,21 @@ const filteredDescription = computed(() => {
 });
 
 defineEmits(['cta']);
+
+// Форматирование минимальной цены
+const formattedMinPrice = computed(() => {
+  // Проверяем, что значение не null и не undefined
+  if (props.minTicketPriceCents === null || props.minTicketPriceCents === undefined) {
+    return null;
+  }
+  // Проверяем, что значение валидное число
+  if (isNaN(props.minTicketPriceCents) || props.minTicketPriceCents < 0) {
+    return null;
+  }
+  const rubles = Math.floor(props.minTicketPriceCents / 100);
+  // Если цена равна 0, все равно показываем её
+  return `${rubles.toLocaleString('ru-RU')} ₽`;
+});
 </script>
 
 <style scoped>

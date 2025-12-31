@@ -1,6 +1,7 @@
 package com.surnekev.ticketing.web;
 
 import com.surnekev.ticketing.dto.ConcertDto;
+import com.surnekev.ticketing.dto.SeatCategoryDto;
 import com.surnekev.ticketing.dto.SeatDto;
 import com.surnekev.ticketing.service.ConcertService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,11 @@ public class ConcertController {
     @GetMapping("/{id}/seats")
     public List<SeatDto> getSeats(@PathVariable Long id) {
         return concertService.listSeats(id);
+    }
+
+    @GetMapping("/{id}/categories")
+    public List<SeatCategoryDto> getCategories(@PathVariable Long id) {
+        return concertService.listCategories(id);
     }
 }
 
